@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CollegeBot Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      padding: 20px;
+    }
+    #chatbox {
+      display: none;
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    #chat {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+    .message {
+      margin: 10px 0;
+    }
+    .user {
+      text-align: right;
+      color: blue;
+    }
+    .bot {
+      text-align: left;
+      color: green;
+    }
+    #inputArea {
+      margin-top: 15px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 80%;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Modal Styles */
+    #authModal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 0 10px #444;
+    }
+    .modal-content input {
+      width: 90%;
+      padding: 8px;
+      margin: 8px 0;
+    }
+    .modal-content button {
+      width: 45%;
+      margin: 5px;
+    }
+    #otpSection {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Modal -->
+  <div id="authModal">
+    <div class="modal-content">
+      <h2>📱 Login with Mobile</h2>
+
+      <div id="mobileSection">
+        <input type="number" id="mobileNumber" placeholder="Enter Mobile Number" /><br>
+        <button onclick="getOTP()">Get OTP</button>
+      </div>
+
+      <div id="otpSection">
+        <p>OTP sent to your mobile! (check below 👇)</p>
+        <p id="showOtp" style="font-weight:bold;color:blue;"></p>
+        <input type="number" id="otpInput" placeholder="Enter OTP" /><br>
+        <button onclick="verifyOTP()">Verify OTP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Interface -->
+  <div id="chatbox">
+    <h2 id="welcomeMsg">🎓 CollegeBot Chat</h2>
+    <div id="chat"></div>
+
+    <div id="inputArea">
+      <input type="text" id="userInput" placeholder="Ask your question..." autofocus />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    let generatedOTP = "";
+    let currentUser = "";
+
+    function getOTP() {
+      const mobile = document.getElementById("mobileNumber").value.trim();
+
+      if (mobile.length !== 10) {
+        alert("Please enter a valid 10-digit mobile number.");
+        return;
+      }
+
+      // Simulate OTP
+      generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+      document.getElementById("showOtp").textContent = "Your OTP is: " + generatedOTP;
+      document.getElementById("otpSection").style.display = "block";
+      document.getElementById("mobileSection").style.display = "none";
+      currentUser = mobile;
+    }
+
+    function verifyOTP() {
+      const entered = document.getElementById("otpInput").value.trim();
+      if (entered === generatedOTP) {
+        alert("✅ OTP Verified Successfully!");
+        document.getElementById("authModal").style.display = "none";
+        document.getElementById("chatbox").style.display = "block";
+        document.getElementById("welcomeMsg").textContent = "🎓 Welcome, " + currentUser + "!";
+        appendMessage("CollegeBot: Hi! How can I help you today?", "bot");
+      } else {
+        alert("❌ Invalid OTP. Please try again.");
+      }
+    }
+
+    // Chatbot logic
+    const responses = {
+      "hi": ["Hello!"],
+      "admission": ["Admissions are open 30th Sep to 13th Oct."],
+      "apply": ["You can apply for admission through the college portal."],
+      "eligibility": ["Admission criteria are based on your CET Percentile cut off."],
+      "courses": [
+        "We offer B.Tech programs.Popular courses include 1) Computer Science, 2) Mechanical, 3) Data Science, 4) Civil, 5) Chemical, 6) AI & ML, 7) Electronics and Telecommunication."
+      ],
+      "documents": [
+        "Required docs: 10th & 12th marksheets, CET/JEE scorecard, ID proof, photos, TC, domicile certificate, etc."
+      ],
+      "college fees": [
+        "Annual B.Tech fees: Open ₹127602, OBC ₹73602, SC/ST ₹3551, NT ₹19000."
+      ],
+      "hostel fees": [
+        "Yes, we have hostels. ₹70000/semester including meals."
+      ],
+      "exit": ["Thank you! Goodbye 👋"]
+    };
+
+    const chat = document.getElementById('chat');
+    const userInput = document.getElementById('userInput');
+
+    function appendMessage(text, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message ' + sender;
+      msgDiv.textContent = text;
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function getResponse(userText) {
+      const text = userText.toLowerCase();
+
+      for (const keyword in responses) {
+        if (text.includes(keyword)) {
+          const possibleResponses = responses[keyword];
+          const randomIndex = Math.floor(Math.random() * possibleResponses.length);
+          return possibleResponses[randomIndex];
+        }
+      }
+
+      return "I'm sorry, I don't understand. Please ask about admissions, eligibility, courses, fees, or hostel.";
+    }
+
+    function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      appendMessage("You: " + message, 'user');
+      userInput.value = '';
+
+      if (message.toLowerCase().includes("exit")) {
+        const exitMessages = responses["exit"];
+        const randomExit = exitMessages[Math.floor(Math.random() * exitMessages.length)];
+        appendMessage("CollegeBot: " + randomExit, 'bot');
+        userInput.disabled = true;
+        return;
+      }
+
+      const botReply = getResponse(message);
+      appendMessage("CollegeBot: " + botReply, 'bot');
+    }
+
+    // Send message on Enter key
+    userInput?.addEventListener("keyup", function(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    });
+  </script>
+
+</body>
+</html>
